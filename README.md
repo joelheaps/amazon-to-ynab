@@ -29,16 +29,24 @@ This is a simple tool to automate some of the hassle of matching YNAB (the popul
 
 ## Workflow 
 
-1. **Get a YNAB personal access token from [https://app.ynab.com/settings/developer](https://app.ynab.com/settings/developer).**  Save it to `config.toml` on the line `ynab.api_token = "your_token_in_quotes_here"`.
+1. **Get a YNAB personal access token from [https://app.ynab.com/settings/developer](https://app.ynab.com/settings/developer).**
+    
+    Save it to `config.toml` on the line `ynab.api_token = "your_token_in_quotes_here"`.
 
-2. **If you have multiple budgets, browse to the one you want to match transactions from and copy the budget ID from the URL.**  It's pretty obvious in the URL; grab the "random" text between `https://app.ynab.com/` and `/budget`.  Save it to `config.toml` on the line `ynab.budget_id = "budget_id_in_quotes_here"`.
+2. **If you have multiple budgets, browse to the one you want to match transactions from and copy the budget ID from the URL.**
+    
+    It's pretty obvious in the URL; grab the "random" text between `https://app.ynab.com/` and `/budget`.  Save it to `config.toml` on the line `ynab.budget_id = "budget_id_in_quotes_here"`.
 
-    💡 If you only have one budget, you can also just leave this blank; this tool will attempt to find the default budget on your account.
+    > 💡 If you only have one budget, you can also just leave this blank; this tool will attempt to find the default budget on your account.
 
 3. **Save orders from [https://www.amazon.com/gp/your-account/order-history](https://www.amazon.com/gp/your-account/order-history) to the `orders-html` folder.**
+  
   Use multiple files if you want to include more orders (just make sure they have unique names).
 
 4. **Save transactions from [https://www.amazon.com/cpe/yourpayments/transactions](https://www.amazon.com/cpe/yourpayments/transactions) to the `payments-html` folder.**
+  
   Again, use multiple files if you'd like.
 
-5. **Run `amazon.py` and then `ynab.py`.**  If everything on the screen checks out, set `dry_run = false` in `config.toml` and run `ynab.py` again.
+5. **Run `amazon.py` and then `ynab.py`.**
+    
+    If everything on the screen checks out, set `dry_run = false` in `config.toml` and run `ynab.py` again.
