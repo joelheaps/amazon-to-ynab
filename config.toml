@@ -1,0 +1,9 @@
+dry_run = true
+
+amazon.transactions_file = "amazon-transactions.json"
+amazon.payments_dir = "payments-html"
+amazon.orders_dir = "orders-html"
+
+ynab.api_token = ""
+ynab.budget_id = ""
+ynab.cache_file = "ynab-transactions.json"

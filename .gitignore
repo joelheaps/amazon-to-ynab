@@ -1,7 +1,7 @@
 orders-html/*
 payments-html/*
 venv
-.ynab-cache.json
+ynab-transactions.json
 amazon-transactions.json
 __pycache__
 .pytest*

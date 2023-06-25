@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "amazon-to-ynab"
+version = "0.1.0"
+description = "A tool to add Amazon purchase descriptions to YNAB transactions"
+authors = ["Joel Heaps"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+bs4 = "^0.0.1"
+toml = "^0.10.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+pytest = "^7.4.0"
+ruff = "^0.0.275"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
