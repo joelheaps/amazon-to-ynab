@@ -41,11 +41,11 @@ This is a simple tool to automate some of the hassle of matching YNAB (the popul
 
 3. **Save orders from [https://www.amazon.com/gp/your-account/order-history](https://www.amazon.com/gp/your-account/order-history) to the `orders-html` folder.**
   
-  Use multiple files if you want to include more orders (just make sure they have unique names).
+    Use multiple files if you want to include more orders (just make sure they have unique names).
 
 4. **Save transactions from [https://www.amazon.com/cpe/yourpayments/transactions](https://www.amazon.com/cpe/yourpayments/transactions) to the `payments-html` folder.**
   
-  Again, use multiple files if you'd like.
+    Again, use multiple files if you'd like.
 
 5. **Run `amazon.py` and then `ynab.py`.**
     
