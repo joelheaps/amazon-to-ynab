@@ -1,0 +1,8 @@
+orders-html/*
+payments-html/*
+venv
+.ynab-cache.json
+amazon-transactions.json
+__pycache__
+.pytest*
+my-config.toml
