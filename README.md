@@ -30,11 +30,12 @@ This is a simple tool to automate some of the hassle of matching YNAB (the popul
 
    ```shell
    pip install -r requirements.txt
+   ```
 
 5. **Get a YNAB personal access token from [https://app.ynab.com/settings/developer](https://app.ynab.com/settings/developer).**
     
     Save it to `config.toml` on the line `ynab.api_token = "your_token_in_quotes_here"`.
-   ```
+
 6. **If you have multiple budgets, browse to the one you want to match transactions from and copy the budget ID from the URL.**
     
     It's pretty obvious in the URL; grab the "random" text between `https://app.ynab.com/` and `/budget`.  Save it to `config.toml` on the line `ynab.budget_id = "budget_id_in_quotes_here"`.
