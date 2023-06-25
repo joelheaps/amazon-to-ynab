@@ -41,4 +41,4 @@ This is a simple tool to automate some of the hassle of matching YNAB (the popul
 4. **Save transactions from [https://www.amazon.com/cpe/yourpayments/transactions](https://www.amazon.com/cpe/yourpayments/transactions) to the `payments-html` folder.**
   Again, use multiple files if you'd like.
 
-5. **Run `amazon.py` and then `ynab.py`.  If everything on the screen checks out, set `dry_run = false` in `config.toml` and run `ynab.py` again.
+5. **Run `amazon.py` and then `ynab.py`.**  If everything on the screen checks out, set `dry_run = false` in `config.toml` and run `ynab.py` again.
