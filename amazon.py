@@ -1,7 +1,14 @@
 from pathlib import Path
 from bs4 import BeautifulSoup
+from bs4 import Tag
 import json
 import toml
+import logging
+import sys
+from pydantic import BaseModel
+from typing import Callable, Any
+
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 # Load config from config.toml
 config = toml.load("config.toml")
@@ -14,14 +21,27 @@ PAYMENTS_DIR = Path(PAYMENTS_DIR).resolve()
 ORDERS_DIR = Path(ORDERS_DIR).resolve()
 
 
-def extract_text(element, default=None):
+class Transaction(BaseModel):
+    amount: str
+    order_number: str
+
+
+class Order(BaseModel):
+    date: str
+    subtotal: str
+    order_number: str
+    description: str | None = None  # Optional description field
+    transaction_amount: int = 0  # Cents
+
+
+def extract_text(element, default="") -> str:
     """
     Extract stripped text from an element if it exists.
     """
     return element.get_text().strip() if element else default
 
 
-def parse_transactions(soup_parser: BeautifulSoup) -> list[dict]:
+def parse_transactions(soup_parser: BeautifulSoup) -> list[Transaction]:
     """
     Parse transaction details from a BeautifulSoup object.
     """
@@ -35,88 +55,121 @@ def parse_transactions(soup_parser: BeautifulSoup) -> list[dict]:
         amount = extract_text(amount_element)
 
         order_element = parser.find("a")
-        order_number = (
-            extract_text(order_element).replace("Order #", "")
-            if order_element
-            else None
-        )
+        order_number = extract_text(order_element).replace("Order #", "")
 
-        transactions.append({"amount": amount, "order_number": order_number})
+        transactions.append(Transaction(amount=amount, order_number=order_number))
 
     return transactions
 
 
-def find_element_text(order_div, div_class, span_class) -> str:
-    """
-    Find an HTML element and return its text content.
-    """
-    element = order_div.find("div", class_=div_class).find("span", class_=span_class)
-    return extract_text(element)
+def parse_order(order_div: Tag) -> Order:
+    logging.info("Parsing a new order div...")
 
+    # Extracting the date
+    date = order_div.find("span", class_="a-size-base a-color-secondary")
+    date = date.text if date else ""
+    logging.debug(f"Extracted order date: {date}")
 
-def parse_order(order_div) -> dict:
-    """
-    Parse order details from an HTML div.
-    """
-    order_placed = find_element_text(
-        order_div, "a-column a-span3", "a-color-secondary value"
+    # Extracting the subtotal
+    subtotal = order_div.find("div", class_="yohtmlc-order-total")
+    subtotal = subtotal.text.strip() if subtotal else ""
+    logging.debug(f"Extracted order subtotal: {subtotal}")
+
+    # Extracting order number (ID)
+    order_number_section = order_div.find("span", string="Order #")
+    order_number = (
+        order_number_section.find_next_sibling("span") if order_number_section else None
     )
-    total = find_element_text(
-        order_div, "a-column a-span2 yohtmlc-order-total", "a-color-secondary value"
-    )
-    ship_to = extract_text(order_div.find("span", class_="trigger-text"))
+    order_number = order_number.text.strip() if order_number else ""
+    logging.debug(f"Extracted order number: {order_number}")
 
-    order_id = find_element_text(
-        order_div, "a-row a-size-mini yohtmlc-order-id", "a-color-secondary value"
-    )
+    # Extracting the description
+    description_div = order_div.find("div", class_="yohtmlc-product-title")
+    description = description_div.text.strip() if description_div else None
+    if description:
+        logging.debug(f"Extracted product description: {description}")
+    else:
+        logging.warning("No product description found for this order.")
 
-    # find all 'a' tags with class 'a-link-normal' in the soup
-    links = order_div.find_all("a", {"class": "a-link-normal"})
-
-    # filter out those that have '/product' in their 'href' attribute
-    product_link = next(
-        (
-            link
-            for link in links
-            if ("/product" in link.get("href", "")) and link.text.strip()
-        ),
-        None,
+    # Constructing the Order object
+    order = Order(
+        date=date,
+        subtotal=subtotal,
+        order_number=order_number,
+        description=description,
     )
 
-    description = extract_text(product_link).replace("\n", "") if product_link else None
+    logging.info("Order parsing complete.")
 
-    return {
-        "date": order_placed,
-        "amount": total,
-        "ship_to": ship_to,
-        "order_number": order_id,
-        "description": description,
-    }
+    return order
 
 
-def parse_orders(soup_parser: BeautifulSoup) -> list[dict]:
+def parse_orders(soup_parser: BeautifulSoup) -> list[Order]:
     """
     Parse orders from a HTML text.
     """
-    order_divs = soup_parser.find_all(
-        "div", class_="a-box-group a-spacing-base order js-order-card"
-    )
+    logging.info("Starting the parsing of orders...")
+
+    order_divs = soup_parser.find_all("div", class_="order-card js-order-card")
+
+    if not order_divs:
+        logging.warning("No order divs found in the provided content!")
+        return []
+
+    logging.debug(f"Found {len(order_divs)} order divs to process.")
+
     orders = [parse_order(div) for div in order_divs]
+
+    logging.info(f"Parsed a total of {len(orders)} orders.")
+
     return orders
 
 
-def parse_html_files(directory_path: Path, parser_func):
+def parse_html_files(
+    directory_path: Path, parser_func: Callable[[BeautifulSoup], Any]
+) -> Any:
     """
     Parse HTML files in a directory using a specified parser function.
     """
     parsed_items = []
     for file_path in directory_path.glob("*.htm*"):
         with open(file_path, "r", errors="ignore") as file:
-            print("File Name:", file_path.name)
+            logging.info(f"Parsing HTML file: {file_path.name}")
             html_content = file.read()
             parsed_items.extend(parser_func(BeautifulSoup(html_content, "html.parser")))
 
     return parsed_items
+
+
+def associate_transactions_to_orders(
+    transactions: list[Transaction], orders: list[Order]
+) -> list[Order]:
+    """
+    Associate transaction amounts to orders based on order number.
+    Returns a list of orders with the associated transaction amounts.
+    """
+    # Dictionary to hold transactions by order number
+    transaction_dict = {
+        transaction.order_number: transaction for transaction in transactions
+    }
+
+    for order in orders:
+        transaction = transaction_dict.get(order.order_number)
+        if transaction:
+            # Convert the transaction amount from string to integer (in cents)
+            # for consistency
+            cents = int(float(transaction.amount.replace("$", "")) * 100)
+            order.transaction_amount = cents
+
+    # Log the results
+    logging.info("Total transactions: %d", len(transactions))
+    logging.info("Total orders: %d", len(orders))
+    logging.info(
+        "Number of orders with associated transactions: %d",
+        sum(1 for order in orders if order.transaction_amount > 0),
+    )
+
+    return orders
 
 
 def main() -> None:
@@ -129,16 +182,14 @@ def main() -> None:
 
     # Combine orders and transactions by order number, ignoring orders without a
     # matching transaction.
-    combined = [
-        {**order, **transaction}
-        for order in orders
-        for transaction in transactions
-        if order["order_number"] == transaction["order_number"]
-    ]
+    orders_with_totals: list[Order] = associate_transactions_to_orders(
+        transactions, orders
+    )
+    json_ready_orders: list[dict] = [model.model_dump() for model in orders_with_totals]
 
     # Write the combined data to a JSON file
     with open(AMAZON_TRANSACTIONS_FILE, "w") as file:
-        json.dump(combined, file, indent=4)
+        json.dump(json_ready_orders, file, indent=4)
 
 
 if __name__ == "__main__":
