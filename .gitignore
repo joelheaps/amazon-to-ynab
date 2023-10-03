@@ -1,8 +1,9 @@
 orders-html/*
 payments-html/*
-venv
+.venv
 ynab-transactions.json
 amazon-transactions.json
 __pycache__
 .pytest*
-my-config.toml
+config.toml
+.pdm-python
